@@ -41,6 +41,11 @@ const nextConfig = withStoreConfig({
         protocol: 'https',
         hostname: 'medusa-server-testing.s3.us-east-1.amazonaws.com',
       },
+      // Add your specific S3 bucket domain here
+      {
+        protocol: 'https',
+        hostname: 'clothesrewear.s3.us-east-2.amazonaws.com',
+      },
     ],
   },
 })
