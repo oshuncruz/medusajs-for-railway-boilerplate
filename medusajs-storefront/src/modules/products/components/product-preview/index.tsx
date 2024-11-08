@@ -9,7 +9,7 @@ import { Region } from '@medusajs/medusa';
 import LocalizedClientLink from '@modules/common/components/localized-client-link';
 import Thumbnail from '../thumbnail';
 import PreviewPrice from './price';
-import { useCart, useCreateLineItem } from 'medusa-react';
+import { useCart } from 'medusa-react';
 
 export default function ProductPreview({
   productPreview,
@@ -20,10 +20,9 @@ export default function ProductPreview({
   isFeatured?: boolean;
   region: Region;
 }) {
-  // Call hooks at the top level
-  const { cart } = useCart();
-  const { mutate: addItem, isLoading: isAdding } = useCreateLineItem(); // Call without arguments
+  const { cart, addItem } = useCart(); // Use addItem from useCart
   const [pricedProduct, setPricedProduct] = useState(null);
+  const [isAdding, setIsAdding] = useState(false);
 
   // Fetch priced product
   useEffect(() => {
@@ -53,28 +52,24 @@ export default function ProductPreview({
   });
 
   // Handle adding item to cart
-  const handleAddToCart = () => {
-    if (!pricedProduct || !cart?.id) {
+  const handleAddToCart = async () => {
+    if (!pricedProduct) {
       return;
     }
 
+    setIsAdding(true);
+
     const variantId = pricedProduct.variants[0].id;
 
-    addItem(
-      {
-        cart_id: cart.id, // Pass cart_id here
-        variant_id: variantId,
-        quantity: 1,
-      },
-      {
-        onSuccess: () => {
-          // Optional: handle success feedback
-        },
-        onError: (error) => {
-          console.error('Failed to add item to cart:', error);
-        },
-      }
-    );
+    try {
+      await addItem({ variantId, quantity: 1 });
+      // Optional: handle success feedback
+    } catch (error) {
+      console.error('Failed to add item to cart:', error);
+      // Optional: handle error feedback
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   return (
@@ -97,7 +92,7 @@ export default function ProductPreview({
       <Button
         onClick={handleAddToCart}
         isLoading={isAdding}
-        disabled={isAdding || !cart?.id}
+        disabled={isAdding}
         className="mt-2 w-full"
       >
         Add to Cart
