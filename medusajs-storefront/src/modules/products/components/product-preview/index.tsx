@@ -22,12 +22,6 @@ export default function ProductPreview({
 }) {
   const { cart } = useCart();
 
-  // Check if cart is available
-  if (!cart) {
-    // Render loading state or null until cart is available
-    return null;
-  }
-
   // Call useCreateLineItem without arguments
   const { mutate: addItem, isLoading: isAdding } = useCreateLineItem();
   const [pricedProduct, setPricedProduct] = useState(null);
@@ -44,15 +38,8 @@ export default function ProductPreview({
     fetchProduct();
   }, [productPreview.id, region.id]);
 
-  if (!pricedProduct) {
-    // Optionally render a loading state while the product is being fetched
-    return null;
-  }
-
-  const { cheapestPrice } = getProductPrice({
-    product: pricedProduct,
-    region,
-  });
+  // Handle cases where cart or product data is not yet available
+  const isLoading = !cart || !pricedProduct;
 
   const handleAddToCart = () => {
     if (!pricedProduct || !cart?.id) {
@@ -78,6 +65,16 @@ export default function ProductPreview({
     );
   };
 
+  if (isLoading) {
+    // Optionally render a loading state while cart or product is being fetched
+    return null;
+  }
+
+  const { cheapestPrice } = getProductPrice({
+    product: pricedProduct,
+    region,
+  });
+
   return (
     <div className="group">
       <LocalizedClientLink href={`/products/${productPreview.handle}`}>
@@ -98,7 +95,7 @@ export default function ProductPreview({
       <Button
         onClick={handleAddToCart}
         isLoading={isAdding}
-        disabled={isAdding}
+        disabled={isAdding || !cart || !pricedProduct}
         className="mt-2 w-full"
       >
         Add to Cart
