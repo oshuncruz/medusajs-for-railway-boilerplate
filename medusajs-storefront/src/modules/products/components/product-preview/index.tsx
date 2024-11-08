@@ -11,26 +11,33 @@ import Thumbnail from '../thumbnail';
 import PreviewPrice from './price';
 import { useCart } from 'medusa-react';
 
-export default function ProductPreview({
-  productPreview,
-  isFeatured,
-  region,
-}: {
+interface ProductPreviewProps {
   productPreview: ProductPreviewType;
   isFeatured?: boolean;
   region: Region;
-}) {
-  const { cart, addItem } = useCart(); // Use addItem instead of addLineItem
-  const [pricedProduct, setPricedProduct] = useState(null);
-  const [isAdding, setIsAdding] = useState(false);
+}
+
+export default function ProductPreview({
+  productPreview,
+  isFeatured = false,
+  region,
+}: ProductPreviewProps) {
+  const { cart, addLineItem } = useCart();
+  const [pricedProduct, setPricedProduct] = useState<any>(null);
+  const [isAdding, setIsAdding] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
-      const product = await retrievePricedProductById({
-        id: productPreview.id,
-        regionId: region.id,
-      });
-      setPricedProduct(product);
+      try {
+        const product = await retrievePricedProductById({
+          id: productPreview.id,
+          regionId: region.id,
+        });
+        setPricedProduct(product);
+      } catch (error) {
+        console.error('Error fetching product:', error);
+        // You might want to add error handling UI here
+      }
     };
 
     fetchProduct();
@@ -46,20 +53,22 @@ export default function ProductPreview({
     const variantId = pricedProduct.variants[0].id;
 
     try {
-      await addItem({ variant_id: variantId, quantity: 1 });
-      // Optional: Handle success (e.g., show notification)
+      await addLineItem({
+        variant_id: variantId,
+        quantity: 1,
+      });
+      // You could add a success notification here
     } catch (error) {
       console.error('Failed to add item to cart:', error);
-      // Optional: Handle error (e.g., show error message)
+      // You could add an error notification here
     } finally {
       setIsAdding(false);
     }
   };
 
-  const isLoading = !cart || !pricedProduct;
-
-  if (isLoading) {
-    return null; // Or render a loading indicator
+  // Show loading state or return null while data is being fetched
+  if (!cart || !pricedProduct) {
+    return null; // Or return a loading spinner component
   }
 
   const { cheapestPrice } = getProductPrice({
@@ -68,29 +77,35 @@ export default function ProductPreview({
   });
 
   return (
-    <div className="group">
-      <LocalizedClientLink href={`/products/${productPreview.handle}`}>
-        <div>
+    <div className="group relative flex flex-col">
+      <LocalizedClientLink 
+        href={`/products/${productPreview.handle}`}
+        className="flex-1"
+      >
+        <div className="relative">
           <Thumbnail
             thumbnail={productPreview.thumbnail}
             size="full"
             isFeatured={isFeatured}
           />
           <div className="flex txt-compact-medium mt-4 justify-between">
-            <Text className="text-ui-fg-subtle">{productPreview.title}</Text>
+            <Text className="text-ui-fg-subtle truncate">
+              {productPreview.title}
+            </Text>
             <div className="flex items-center gap-x-2">
               {cheapestPrice && <PreviewPrice price={cheapestPrice} />}
             </div>
           </div>
         </div>
       </LocalizedClientLink>
+      
       <Button
         onClick={handleAddToCart}
-        isLoading={isAdding}
         disabled={isAdding}
+        isLoading={isAdding}
         className="mt-2 w-full"
       >
-        Add to Cart
+        {isAdding ? 'Adding...' : 'Add to Cart'}
       </Button>
     </div>
   );
