@@ -1,6 +1,7 @@
-// Remove "use client" at the top to make it a Server Component.
+"use client";
 
-import { Text } from "@medusajs/ui";
+import { useState, useEffect } from "react";
+import { Text, Button } from "@medusajs/ui";
 import { ProductPreviewType } from "types/global";
 import { retrievePricedProductById } from "@lib/data";
 import { getProductPrice } from "@lib/util/get-product-price";
@@ -9,8 +10,9 @@ import LocalizedClientLink from "@modules/common/components/localized-client-lin
 import Thumbnail from "../thumbnail";
 import PreviewPrice from "./price";
 import { addToCart } from "@modules/cart/actions";
+import { useParams } from "next/navigation";
 
-export default async function ProductPreview({
+export default function ProductPreview({
   productPreview,
   isFeatured,
   region,
@@ -19,14 +21,26 @@ export default async function ProductPreview({
   isFeatured?: boolean;
   region: Region;
 }) {
-  // Fetch the priced product data on the server side.
-  const pricedProduct = await retrievePricedProductById({
-    id: productPreview.id,
-    regionId: region.id,
-  });
+  const [isAdding, setIsAdding] = useState(false);
+  const [pricedProduct, setPricedProduct] = useState(null);
+
+  const params = useParams();
+  const countryCode = params.countryCode as string || "us"; // Adjust as needed
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      const product = await retrievePricedProductById({
+        id: productPreview.id,
+        regionId: region.id,
+      });
+      setPricedProduct(product);
+    };
+
+    fetchProduct();
+  }, [productPreview.id, region.id]);
 
   if (!pricedProduct) {
-    return null;
+    return null; // Or a loading indicator
   }
 
   const { cheapestPrice } = getProductPrice({
@@ -34,20 +48,29 @@ export default async function ProductPreview({
     region,
   });
 
-  // Define a server action to handle the form submission.
-  async function handleAddToCart(formData: FormData) {
-    "use server";
+  const handleAddToCart = async () => {
+    if (!pricedProduct?.variants?.length) {
+      console.error("No variants available for this product");
+      return;
+    }
 
-    const variantId = formData.get("variantId") as string;
-    const quantity = Number(formData.get("quantity") || 1);
-    const countryCode = region.countries[0]?.iso_2 || "us"; // Default to "us" if country code is unavailable.
+    const variantId = pricedProduct.variants[0].id;
 
-    await addToCart({
-      variantId,
-      quantity,
-      countryCode,
-    });
-  }
+    setIsAdding(true);
+
+    try {
+      await addToCart({
+        variantId,
+        quantity: 1,
+        countryCode,
+      });
+      // Optionally, provide user feedback or refresh cart state
+    } catch (error) {
+      console.error("Failed to add item to cart:", error);
+    } finally {
+      setIsAdding(false);
+    }
+  };
 
   return (
     <div className="group">
@@ -67,14 +90,15 @@ export default async function ProductPreview({
         </div>
       </LocalizedClientLink>
 
-      {/* Add a form to handle the "Add to Cart" action */}
-      <form action={handleAddToCart}>
-        <input type="hidden" name="variantId" value={pricedProduct.variants[0].id} />
-        <input type="hidden" name="quantity" value="1" />
-        <button type="submit" className="mt-2 w-full">
-          Add to Cart
-        </button>
-      </form>
+      {/* Add "Add to Cart" button */}
+      <Button
+        onClick={handleAddToCart}
+        isLoading={isAdding}
+        disabled={isAdding}
+        className="mt-2 w-full"
+      >
+        Add to Cart
+      </Button>
     </div>
   );
 }
