@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Text, Button } from "@medusajs/ui";
-import { ProductPreviewType } from "types/global";
-import { retrievePricedProductById } from "@lib/data";
-import { getProductPrice } from "@lib/util/get-product-price";
-import { Region } from "@medusajs/medusa";
-import LocalizedClientLink from "@modules/common/components/localized-client-link";
-import Thumbnail from "../thumbnail";
-import PreviewPrice from "./price";
-import { useCart } from "medusa-react";
+import { useState, useEffect } from 'react';
+import { Text, Button } from '@medusajs/ui';
+import { ProductPreviewType } from 'types/global';
+import { retrievePricedProductById } from '@lib/data';
+import { getProductPrice } from '@lib/util/get-product-price';
+import { Region } from '@medusajs/medusa';
+import LocalizedClientLink from '@modules/common/components/localized-client-link';
+import Thumbnail from '../thumbnail';
+import PreviewPrice from './price';
+import { useCart, useCreateLineItem } from 'medusa-react';
 
 export default function ProductPreview({
   productPreview,
@@ -20,8 +20,8 @@ export default function ProductPreview({
   isFeatured?: boolean;
   region: Region;
 }) {
-  const { cart, addItem } = useCart();
-  const [isAdding, setIsAdding] = useState(false);
+  const { cart } = useCart();
+  const { mutate: addItem, isLoading: isAdding } = useCreateLineItem();
   const [pricedProduct, setPricedProduct] = useState(null);
 
   useEffect(() => {
@@ -45,26 +45,27 @@ export default function ProductPreview({
     region,
   });
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = () => {
     if (!cart || !pricedProduct) {
       return;
     }
 
-    setIsAdding(true);
+    const variantId = pricedProduct.variants[0].id;
 
-    try {
-      // Assuming the product has a default variant or single variant
-      const variantId = pricedProduct.variants[0].id;
-
-      await addItem({
+    addItem(
+      {
         variant_id: variantId,
         quantity: 1,
-      });
-    } catch (error) {
-      console.error("Failed to add item to cart:", error);
-    } finally {
-      setIsAdding(false);
-    }
+      },
+      {
+        onSuccess: () => {
+          // Optional: handle success feedback
+        },
+        onError: (error) => {
+          console.error('Failed to add item to cart:', error);
+        },
+      }
+    );
   };
 
   return (
