@@ -1,7 +1,5 @@
-import { Text } from "@medusajs/ui"
-
+import { Text, Button } from "@medusajs/ui"
 import { ProductPreviewType } from "types/global"
-
 import { retrievePricedProductById } from "@lib/data"
 import { getProductPrice } from "@lib/util/get-product-price"
 import { Region } from "@medusajs/medusa"
@@ -21,7 +19,7 @@ export default async function ProductPreview({
   const pricedProduct = await retrievePricedProductById({
     id: productPreview.id,
     regionId: region.id,
-  }).then((product) => product)
+  })
 
   if (!pricedProduct) {
     return null
@@ -31,6 +29,8 @@ export default async function ProductPreview({
     product: pricedProduct,
     region,
   })
+
+  const inStock = pricedProduct.stock_quantity > 0 // Assuming `stock_quantity` is available in `pricedProduct`
 
   return (
     <LocalizedClientLink
@@ -49,6 +49,14 @@ export default async function ProductPreview({
             {cheapestPrice && <PreviewPrice price={cheapestPrice} />}
           </div>
         </div>
+        {/* Add the stock status button */}
+        <Button
+          variant="primary"
+          className="mt-2 w-full"
+          disabled={!inStock}
+        >
+          {inStock ? "Add to Cart" : "Out of Stock"}
+        </Button>
       </div>
     </LocalizedClientLink>
   )
