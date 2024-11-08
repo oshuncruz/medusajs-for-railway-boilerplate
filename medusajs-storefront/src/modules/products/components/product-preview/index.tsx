@@ -21,7 +21,15 @@ export default function ProductPreview({
   region: Region;
 }) {
   const { cart } = useCart();
-  const { mutate: addItem, isLoading: isAdding } = useCreateLineItem(cart?.id);
+
+  // Check if cart and cart.id are available
+  if (!cart?.id) {
+    // Render loading state or null until cart.id is available
+    return null;
+  }
+
+  // Now we can safely call useCreateLineItem
+  const { mutate: addItem, isLoading: isAdding } = useCreateLineItem(cart.id);
   const [pricedProduct, setPricedProduct] = useState(null);
 
   useEffect(() => {
@@ -37,6 +45,7 @@ export default function ProductPreview({
   }, [productPreview.id, region.id]);
 
   if (!pricedProduct) {
+    // Optionally render a loading state while the product is being fetched
     return null;
   }
 
@@ -46,7 +55,7 @@ export default function ProductPreview({
   });
 
   const handleAddToCart = () => {
-    if (!cart || !pricedProduct) {
+    if (!pricedProduct) {
       return;
     }
 
