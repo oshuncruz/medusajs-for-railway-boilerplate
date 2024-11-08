@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Text, Button } from "@medusajs/ui";
 import { ProductPreviewType } from "types/global";
 import { retrievePricedProductById } from "@lib/data";
@@ -49,13 +49,35 @@ export default function ProductPreview({
     region,
   });
 
-  const handleAddToCart = async () => {
-    if (!pricedProduct?.variants?.length) {
-      console.error("No variants available for this product");
-      return;
+  // Get the first variant
+  const variant = pricedProduct.variants[0];
+
+  if (!variant) {
+    console.error("No variants available for this product");
+    return null;
+  }
+
+  // Determine if the variant is in stock, similar to ProductActions
+  const inStock = useMemo(() => {
+    if (!variant) return false;
+
+    if (!variant.manage_inventory) {
+      return true;
     }
 
-    const variantId = pricedProduct.variants[0].id;
+    if (variant.inventory_quantity > 0) {
+      return true;
+    }
+
+    if (variant.allow_backorder) {
+      return true;
+    }
+
+    return false;
+  }, [variant]);
+
+  const handleAddToCart = async () => {
+    const variantId = variant.id;
 
     if (!variantId) {
       console.error("Variant ID is undefined");
@@ -100,10 +122,10 @@ export default function ProductPreview({
       <Button
         onClick={handleAddToCart}
         isLoading={isAdding}
-        disabled={isAdding}
+        disabled={isAdding || !inStock}
         className="mt-2 w-full"
       >
-        Add to Cart
+        {!inStock ? "Out of Stock" : "Add to Cart"}
       </Button>
     </div>
   );
