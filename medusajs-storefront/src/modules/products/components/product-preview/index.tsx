@@ -7,8 +7,7 @@ import { Region } from "@medusajs/medusa";
 import { PricedProduct } from "@medusajs/medusa/dist/types/pricing";
 import { isEqual } from "lodash";
 import { useParams } from "next/navigation";
-
-import { useIntersection } from "@lib/hooks/use-in-view";
+import { getProductPrice } from "@lib/util/get-product-price";
 import { retrievePricedProductById } from "@lib/data";
 import { addToCart } from "@modules/cart/actions";
 import LocalizedClientLink from "@modules/common/components/localized-client-link";
