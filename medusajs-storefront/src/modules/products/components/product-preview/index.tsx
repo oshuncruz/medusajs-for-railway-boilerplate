@@ -9,7 +9,7 @@ import { Region } from '@medusajs/medusa';
 import LocalizedClientLink from '@modules/common/components/localized-client-link';
 import Thumbnail from '../thumbnail';
 import PreviewPrice from './price';
-import { useCart, useCreateLineItem } from 'medusa-react';
+import { useCart } from 'medusa-react';
 
 export default function ProductPreview({
   productPreview,
@@ -20,11 +20,9 @@ export default function ProductPreview({
   isFeatured?: boolean;
   region: Region;
 }) {
-  const { cart } = useCart();
-
-  // Call useCreateLineItem without arguments
-  const { mutate: addItem, isLoading: isAdding } = useCreateLineItem();
+  const { cart, addLineItem } = useCart();
   const [pricedProduct, setPricedProduct] = useState(null);
+  const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -38,36 +36,30 @@ export default function ProductPreview({
     fetchProduct();
   }, [productPreview.id, region.id]);
 
-  // Handle cases where cart or product data is not yet available
-  const isLoading = !cart || !pricedProduct;
-
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!pricedProduct || !cart?.id) {
       return;
     }
 
+    setIsAdding(true);
+
     const variantId = pricedProduct.variants[0].id;
 
-    addItem(
-      {
-        cart_id: cart.id,
-        variant_id: variantId,
-        quantity: 1,
-      },
-      {
-        onSuccess: () => {
-          // Optional: handle success feedback
-        },
-        onError: (error) => {
-          console.error('Failed to add item to cart:', error);
-        },
-      }
-    );
+    try {
+      await addLineItem({ variant_id: variantId, quantity: 1 });
+      // Optional: Handle success (e.g., show notification)
+    } catch (error) {
+      console.error('Failed to add item to cart:', error);
+      // Optional: Handle error (e.g., show error message)
+    } finally {
+      setIsAdding(false);
+    }
   };
 
+  const isLoading = !cart || !pricedProduct;
+
   if (isLoading) {
-    // Optionally render a loading state while cart or product is being fetched
-    return null;
+    return null; // Or render a loading indicator
   }
 
   const { cheapestPrice } = getProductPrice({
@@ -95,7 +87,7 @@ export default function ProductPreview({
       <Button
         onClick={handleAddToCart}
         isLoading={isAdding}
-        disabled={isAdding || !cart || !pricedProduct}
+        disabled={isAdding}
         className="mt-2 w-full"
       >
         Add to Cart
