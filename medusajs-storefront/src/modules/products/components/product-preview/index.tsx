@@ -1,11 +1,11 @@
-"use client";
+"use client"
 
 import { useState, useEffect } from "react";
 import { Text, Button } from "@medusajs/ui";
 import { ProductPreviewType } from "types/global";
 import { retrievePricedProductById } from "@lib/data";
 import { getProductPrice } from "@lib/util/get-product-price";
-import { Region } from "@medusajs/medusa";
+import { Region, PricedProduct } from "@medusajs/medusa";
 import LocalizedClientLink from "@modules/common/components/localized-client-link";
 import Thumbnail from "../thumbnail";
 import PreviewPrice from "./price";
@@ -22,10 +22,10 @@ export default function ProductPreview({
   region: Region;
 }) {
   const [isAdding, setIsAdding] = useState(false);
-  const [pricedProduct, setPricedProduct] = useState(null);
+  const [pricedProduct, setPricedProduct] = useState<PricedProduct | null>(null);
 
   const params = useParams();
-  const countryCode = params.countryCode as string || "us"; // Adjust as needed
+  const countryCode = (params.countryCode as string) || "us"; // Adjust as needed
 
   useEffect(() => {
     const fetchProduct = async () => {
