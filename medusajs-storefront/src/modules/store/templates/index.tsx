@@ -1,19 +1,20 @@
 import { Suspense } from "react"
-
 import SkeletonProductGrid from "@modules/skeletons/templates/skeleton-product-grid"
 import RefinementList from "@modules/store/components/refinement-list"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
-
 import PaginatedProducts from "./paginated-products"
+import { Button } from "@medusajs/ui"
 
 const StoreTemplate = ({
   sortBy,
   page,
   countryCode,
+  inStock, // Pass inStock as a prop if available, or determine it within the component
 }: {
   sortBy?: SortOptions
   page?: string
   countryCode: string
+  inStock?: boolean
 }) => {
   const pageNumber = page ? parseInt(page) : 1
 
@@ -23,6 +24,14 @@ const StoreTemplate = ({
       <div className="w-full">
         <div className="mb-8 text-2xl-semi">
           <h1>All products</h1>
+          {/* Add the Button below the product name */}
+          <Button
+            variant="primary"
+            className="mt-4"
+            disabled={!inStock}
+          >
+            {inStock ? "Add to Cart" : "Out of Stock"}
+          </Button>
         </div>
         <Suspense fallback={<SkeletonProductGrid />}>
           <PaginatedProducts
