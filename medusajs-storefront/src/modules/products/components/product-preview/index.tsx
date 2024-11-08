@@ -40,24 +40,10 @@ export default function ProductPreview({
     fetchProduct();
   }, [productPreview.id, region.id]);
 
-  if (!pricedProduct) {
-    return null; // Or a loading indicator
-  }
+  // Define variant before any conditional returns
+  const variant = pricedProduct?.variants[0];
 
-  const { cheapestPrice } = getProductPrice({
-    product: pricedProduct,
-    region,
-  });
-
-  // Get the first variant
-  const variant = pricedProduct.variants[0];
-
-  if (!variant) {
-    console.error("No variants available for this product");
-    return null;
-  }
-
-  // Determine if the variant is in stock, similar to ProductActions
+  // Determine if the variant is in stock
   const inStock = useMemo(() => {
     if (!variant) return false;
 
@@ -75,6 +61,21 @@ export default function ProductPreview({
 
     return false;
   }, [variant]);
+
+  // Now, handle conditional returns
+  if (!pricedProduct) {
+    return null; // Or a loading indicator
+  }
+
+  const { cheapestPrice } = getProductPrice({
+    product: pricedProduct,
+    region,
+  });
+
+  if (!variant) {
+    console.error("No variants available for this product");
+    return null;
+  }
 
   const handleAddToCart = async () => {
     const variantId = variant.id;
