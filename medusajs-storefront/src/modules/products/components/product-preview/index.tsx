@@ -1,11 +1,12 @@
-"use client"
+"use client";
 
 import { useState, useEffect } from "react";
 import { Text, Button } from "@medusajs/ui";
 import { ProductPreviewType } from "types/global";
 import { retrievePricedProductById } from "@lib/data";
 import { getProductPrice } from "@lib/util/get-product-price";
-import { Region, PricedProduct } from "@medusajs/medusa";
+import { Region } from "@medusajs/medusa";
+import { PricedProduct } from "@medusajs/medusa/dist/types/pricing";
 import LocalizedClientLink from "@modules/common/components/localized-client-link";
 import Thumbnail from "../thumbnail";
 import PreviewPrice from "./price";
