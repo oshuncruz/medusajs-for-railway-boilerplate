@@ -20,7 +20,7 @@ export default function ProductPreview({
   isFeatured?: boolean;
   region: Region;
 }) {
-  const { cart, addLineItem } = useCart();
+  const { cart, addItem } = useCart(); // Use addItem instead of addLineItem
   const [pricedProduct, setPricedProduct] = useState(null);
   const [isAdding, setIsAdding] = useState(false);
 
@@ -46,7 +46,7 @@ export default function ProductPreview({
     const variantId = pricedProduct.variants[0].id;
 
     try {
-      await addLineItem({ variant_id: variantId, quantity: 1 });
+      await addItem({ variant_id: variantId, quantity: 1 });
       // Optional: Handle success (e.g., show notification)
     } catch (error) {
       console.error('Failed to add item to cart:', error);
