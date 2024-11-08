@@ -21,7 +21,7 @@ export default function ProductPreview({
   region: Region;
 }) {
   const { cart } = useCart();
-  const { mutate: addItem, isLoading: isAdding } = useCreateLineItem();
+  const { mutate: addItem, isLoading: isAdding } = useCreateLineItem(cart?.id);
   const [pricedProduct, setPricedProduct] = useState(null);
 
   useEffect(() => {
