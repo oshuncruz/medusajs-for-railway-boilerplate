@@ -8,6 +8,7 @@ import { PricedProduct } from "@medusajs/medusa/dist/types/pricing";
 import { isEqual } from "lodash";
 import { useParams } from "next/navigation";
 
+import { useIntersection } from "@lib/hooks/use-in-view";
 import { retrievePricedProductById } from "@lib/data";
 import { addToCart } from "@modules/cart/actions";
 import LocalizedClientLink from "@modules/common/components/localized-client-link";
@@ -32,6 +33,7 @@ export default function ProductPreview({
   const params = useParams();
   const countryCode = (params.countryCode as string) || "us"; // Adjust as needed
 
+  // Fetch the priced product data
   useEffect(() => {
     const fetchProduct = async () => {
       const product = await retrievePricedProductById({
@@ -44,19 +46,10 @@ export default function ProductPreview({
     fetchProduct();
   }, [productPreview.id, region.id]);
 
-  if (!pricedProduct) {
-    return null; // Or a loading indicator
-  }
-
-  const { cheapestPrice } = getProductPrice({
-    product: pricedProduct,
-    region,
-  });
-
-  const variants = pricedProduct.variants;
-
   // Initialize option state
   useEffect(() => {
+    if (!pricedProduct) return;
+
     const optionObj: Record<string, string> = {};
 
     for (const option of pricedProduct.options || []) {
@@ -66,7 +59,9 @@ export default function ProductPreview({
     setOptions(optionObj);
   }, [pricedProduct]);
 
-  // Create variant record mapping
+  // Define variants and variantRecord
+  const variants = pricedProduct?.variants || [];
+
   const variantRecord = useMemo(() => {
     const map: Record<string, Record<string, string>> = {};
 
@@ -105,21 +100,39 @@ export default function ProductPreview({
     }
   }, [variants, variantRecord]);
 
+  // Determine if the variant is in stock
+  const inStock = useMemo(() => {
+    if (!variant) return false;
+
+    if (!variant.manage_inventory) {
+      return true;
+    }
+
+    if ((variant.inventory_quantity ?? 0) > 0) {
+      return true;
+    }
+
+    if (variant.allow_backorder) {
+      return true;
+    }
+
+    return false;
+  }, [variant]);
+
+  // Handle early return if product data is not available
+  if (!pricedProduct) {
+    return null; // Or a loading indicator
+  }
+
+  const { cheapestPrice } = getProductPrice({
+    product: pricedProduct,
+    region,
+  });
+
   // Update options when user selects an option
   const updateOptions = (update: Record<string, string>) => {
     setOptions({ ...options, ...update });
   };
-
-  // Determine if the variant is in stock
-  const inStock = useMemo(() => {
-    if (variant && !variant.inventory_quantity) {
-      return false
-    }
-
-    if (variant && variant.allow_backorder === false) {
-      return true
-    }
-  }, [variant])
 
   const handleAddToCart = async () => {
     if (!variant?.id) {
