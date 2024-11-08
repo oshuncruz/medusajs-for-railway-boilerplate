@@ -57,6 +57,11 @@ export default function ProductPreview({
 
     const variantId = pricedProduct.variants[0].id;
 
+    if (!variantId) {
+      console.error("Variant ID is undefined");
+      return;
+    }
+
     setIsAdding(true);
 
     try {
